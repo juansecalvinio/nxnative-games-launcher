@@ -25,6 +25,9 @@ struct GameIcon: View {
 }
 
 struct GameBackground: View {
+    // App icons carry transparent margins, so the image is zoomed past them.
+    private let backgroundZoom = 1.35
+
     let game: Game?
 
     var body: some View {
@@ -36,6 +39,7 @@ struct GameBackground: View {
                         .resizable()
                         .scaledToFill()
                         .frame(width: geometry.size.width, height: geometry.size.height)
+                        .scaleEffect(backgroundZoom)
                         .blur(radius: 48)
                         .clipped()
                         .transition(.opacity)
