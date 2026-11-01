@@ -38,7 +38,7 @@ Quiere un launcher nativo y simple que junte sus juegos en un solo lugar, se man
 - Carátula: el ícono del `.app`, ampliado y desenfocado de fondo, con el ícono nítido encima. Los dos `.app` existentes traen `AppIcon.icns` de 1024×1024 (verificado), pero es cuadrado y la pantalla no, por eso se mantiene el fondo desenfocado.
 - La Mac es de uso general: Juan abre el launcher a mano cuando quiere jugar, sin arranque automático al iniciar sesión.
 - Validó estas suposiciones: navegación completa con DualSense (izquierda/derecha para moverse, ✕ para jugar), pantalla completa, JSON editado a mano, nombre del juego en el JSON.
-- El launcher solo lanza el juego. El juego se abre como una app independiente y se cierra con su ventana del sistema operativo, no desde el launcher. El launcher no sigue, controla ni cierra los juegos: no detecta cuándo terminan ni escucha el control mientras se juega.
+- El launcher solo lanza el juego. El juego se abre como una app independiente y se cierra con su ventana del sistema operativo, no desde el launcher. El launcher no controla ni cierra los juegos, ni escucha el control mientras se juega. Sí detecta cuándo termina un juego que abrió, para volver al primer plano (pedido de Juan tras probarlo).
 
 ## Decisiones técnicas de Claude
 
@@ -90,7 +90,7 @@ Decisión de Claude:
 
 Decisión de Claude: como la Mac es de uso general y no hay botón de opciones, se sale con `Cmd+Q`, igual que cualquier app. Con `Cmd+Tab` se puede pasar a otra app sin cerrarlo. El control no tiene acción de salir, para evitar cierres accidentales. Esto no contradice el anti-objetivo: es salir, no navegar ni lanzar.
 
-Tras lanzar un juego el launcher queda abierto detrás, sin hacer nada más.
+Tras lanzar un juego el launcher queda abierto detrás y pasa al frente cuando ese juego se cierra. No aplica a un comando sin `.app`, porque no hay app que observar.
 
 ## Queda a criterio de quien construya
 

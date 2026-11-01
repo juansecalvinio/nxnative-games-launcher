@@ -44,6 +44,12 @@ struct HomeView: View {
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             model.reload()
         }
+        .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didTerminateApplicationNotification)) { notification in
+            let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
+            if let url = app?.bundleURL, model.didLaunchedGameTerminate(at: url) {
+                NSApp.activate()
+            }
+        }
     }
 
     private func enterFullScreen() {

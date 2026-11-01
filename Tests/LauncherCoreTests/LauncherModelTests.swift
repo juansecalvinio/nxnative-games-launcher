@@ -133,3 +133,50 @@ private func threeGames() throws -> URL {
     #expect(reported == url)
     #expect(!message.isEmpty)
 }
+
+private func writeAppConfig() throws -> (config: URL, app: URL) {
+    let dir = FileManager.default.temporaryDirectory
+        .appendingPathComponent(UUID().uuidString)
+        .resolvingSymlinksInPath()
+    let app = dir.appendingPathComponent("Link's Game.app")
+    try FileManager.default.createDirectory(at: app, withIntermediateDirectories: true)
+    let config = dir.appendingPathComponent("games.json")
+    let entry = ["name": "G", "path": dir.path]
+    try JSONSerialization.data(withJSONObject: ["games": [entry]]).write(to: config)
+    return (config, app)
+}
+
+@MainActor @Test func launchedGameTerminationIsReported() async throws {
+    let (config, app) = try writeAppConfig()
+    let model = LauncherModel(configURL: config, launcher: FakeLauncher())
+    await model.confirm()
+    #expect(model.didLaunchedGameTerminate(at: app))
+}
+
+@MainActor @Test func terminationIsReportedOnce() async throws {
+    let (config, app) = try writeAppConfig()
+    let model = LauncherModel(configURL: config, launcher: FakeLauncher())
+    await model.confirm()
+    _ = model.didLaunchedGameTerminate(at: app)
+    #expect(!model.didLaunchedGameTerminate(at: app))
+}
+
+@MainActor @Test func unrelatedAppTerminationIsIgnored() async throws {
+    let (config, _) = try writeAppConfig()
+    let model = LauncherModel(configURL: config, launcher: FakeLauncher())
+    await model.confirm()
+    #expect(!model.didLaunchedGameTerminate(at: URL(fileURLWithPath: "/Applications/Safari.app")))
+}
+
+@MainActor @Test func gameNeverLaunchedIsIgnored() throws {
+    let (config, app) = try writeAppConfig()
+    let model = LauncherModel(configURL: config, launcher: FakeLauncher())
+    #expect(!model.didLaunchedGameTerminate(at: app))
+}
+
+@MainActor @Test func failedLaunchIsNotTracked() async throws {
+    let (config, app) = try writeAppConfig()
+    let model = LauncherModel(configURL: config, launcher: FakeLauncher(error: .nothingToLaunch))
+    await model.confirm()
+    #expect(!model.didLaunchedGameTerminate(at: app))
+}

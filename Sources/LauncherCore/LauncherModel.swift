@@ -21,6 +21,7 @@ public final class LauncherModel {
     private let configURL: URL
     private let launcher: any GameLaunching
     private var isLaunching = false
+    private var launchedApps: Set<String> = []
 
     public init(configURL: URL, launcher: any GameLaunching) {
         self.configURL = configURL
@@ -66,8 +67,15 @@ public final class LauncherModel {
         defer { isLaunching = false }
         do {
             try await launcher.launch(game)
+            if let appURL = game.appURL {
+                launchedApps.insert(appURL.standardizedFileURL.path)
+            }
         } catch {
             message = error.localizedDescription
         }
+    }
+
+    public func didLaunchedGameTerminate(at appURL: URL) -> Bool {
+        launchedApps.remove(appURL.standardizedFileURL.path) != nil
     }
 }
