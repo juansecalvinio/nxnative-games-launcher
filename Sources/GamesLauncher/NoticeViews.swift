@@ -57,6 +57,21 @@ struct ConfigInvalidView: View {
     }
 }
 
+struct LoadingView: View {
+    var body: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+            VStack(spacing: 24) {
+                ProgressView()
+                    .controlSize(.large)
+                    .tint(.white)
+                Text("Cargando biblioteca de juegos...")
+                    .font(.title2.weight(.medium))
+            }
+        }
+    }
+}
+
 struct MessagePanel: View {
     let message: String
 

@@ -6,7 +6,7 @@ The launcher only starts games. Each one runs as an independent macOS app, and t
 
 ## Features
 
-- Game library defined in a single JSON file
+- Game library defined in a single JSON file, with new games in `~/Documents/gaming/roms/switch` added automatically
 - Full-screen, console-style home screen
 - Cover art taken automatically from each game's `.app` icon
 - DualSense controller and keyboard navigation

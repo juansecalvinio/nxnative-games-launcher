@@ -29,6 +29,11 @@ public enum ConfigStore {
             .appendingPathComponent("GamesLauncher/games.json")
     }
 
+    public static var defaultLibraryURL: URL {
+        FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Documents/gaming/roms/switch")
+    }
+
     public static func load(from url: URL) -> ConfigLoadResult {
         guard FileManager.default.fileExists(atPath: url.path) else { return .missing }
         do {
@@ -37,6 +42,26 @@ public enum ConfigStore {
         } catch {
             return .invalid(describe(error))
         }
+    }
+
+    public static func save(_ games: [GameEntry], to url: URL) throws {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .withoutEscapingSlashes
+        func json(_ value: String) throws -> String {
+            String(decoding: try encoder.encode(value), as: UTF8.self)
+        }
+
+        // Written by hand because JSONEncoder doesn't keep the field order of a hand-edited file.
+        let blocks = try games.map { game in
+            var fields = ["\"name\": \(try json(game.name))", "\"path\": \(try json(game.path))"]
+            if let command = game.command {
+                fields.append("\"command\": \(try json(command))")
+            }
+            let body = fields.map { "      \($0)" }.joined(separator: ",\n")
+            return "    {\n\(body)\n    }"
+        }
+        let text = "{\n  \"games\": [\n\(blocks.joined(separator: ",\n"))\n  ]\n}\n"
+        try Data(text.utf8).write(to: url, options: .atomic)
     }
 
     private static func describe(_ error: Error) -> String {

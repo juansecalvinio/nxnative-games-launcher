@@ -18,6 +18,9 @@ struct HomeView: View {
             if let message = model.message {
                 MessagePanel(message: message)
             }
+            if model.isLoading {
+                LoadingView()
+            }
         }
         .foregroundStyle(.white)
         .focusable()
@@ -41,8 +44,13 @@ struct HomeView: View {
             controllerInput?.start()
             coverScreen()
         }
+        .task {
+            await model.start()
+        }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
-            model.reload()
+            if !model.isLoading {
+                model.reload()
+            }
         }
         .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didTerminateApplicationNotification)) { notification in
             let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication

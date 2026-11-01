@@ -9,6 +9,7 @@ public enum LauncherState: Equatable, Sendable {
 
 @MainActor @Observable
 public final class LauncherModel {
+    public private(set) var isLoading = true
     public private(set) var state: LauncherState = .ready
     public private(set) var games: [Game] = []
     public private(set) var selectedIndex = 0
@@ -19,18 +20,45 @@ public final class LauncherModel {
     }
 
     private let configURL: URL
+    private let libraryURL: URL?
     private let launcher: any GameLaunching
     private var isLaunching = false
     private var launchedApps: Set<String> = []
 
-    public init(configURL: URL, launcher: any GameLaunching) {
+    public init(configURL: URL, libraryURL: URL? = nil, launcher: any GameLaunching) {
         self.configURL = configURL
+        self.libraryURL = libraryURL
         self.launcher = launcher
-        reload()
+    }
+
+    public func start(minimumDuration: Duration = .seconds(1)) async {
+        let (configURL, libraryURL) = (configURL, libraryURL)
+        let scan = Task.detached {
+            Self.loadLibrary(configURL: configURL, libraryURL: libraryURL)
+        }
+        try? await Task.sleep(for: minimumDuration)
+        apply(await scan.value)
     }
 
     public func reload() {
-        switch ConfigStore.load(from: configURL) {
+        apply(Self.loadLibrary(configURL: configURL, libraryURL: libraryURL))
+    }
+
+    private nonisolated static func loadLibrary(configURL: URL, libraryURL: URL?) -> ConfigLoadResult {
+        let result = ConfigStore.load(from: configURL)
+        guard case .loaded(let entries) = result, let libraryURL else { return result }
+
+        let discovered = GameDiscovery.newEntries(in: libraryURL, existing: entries)
+        guard !discovered.isEmpty else { return result }
+
+        let all = entries + discovered
+        // If this fails the games still show, and the next scan tries to save them again.
+        try? ConfigStore.save(all, to: configURL)
+        return .loaded(all)
+    }
+
+    private func apply(_ result: ConfigLoadResult) {
+        switch result {
         case .loaded(let entries):
             games = entries.map { GameResolver.resolve($0) }
             state = .ready
@@ -42,6 +70,7 @@ public final class LauncherModel {
             state = .configInvalid(configURL, problem)
         }
         selectedIndex = min(selectedIndex, max(games.count - 1, 0))
+        isLoading = false
     }
 
     public func moveLeft() {

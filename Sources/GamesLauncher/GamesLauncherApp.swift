@@ -5,6 +5,7 @@ import SwiftUI
 struct GamesLauncherApp: App {
     @State private var model = LauncherModel(
         configURL: ConfigStore.defaultURL,
+        libraryURL: ConfigStore.defaultLibraryURL,
         launcher: SystemGameLauncher()
     )
 

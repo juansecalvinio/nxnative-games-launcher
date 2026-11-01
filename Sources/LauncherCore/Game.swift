@@ -54,7 +54,7 @@ public enum GameResolver {
         }
     }
 
-    private static func firstApp(in directory: URL, _ fileManager: FileManager) -> URL? {
+    static func firstApp(in directory: URL, _ fileManager: FileManager) -> URL? {
         let contents = (try? fileManager.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)) ?? []
         return contents
             .filter { $0.pathExtension == "app" && isDirectory($0, fileManager) }
