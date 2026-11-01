@@ -1,6 +1,6 @@
 # nxnative Games Launcher
 
-A native macOS app for launching games compiled with [nxnative](https://github.com/search?q=nxnative&type=repositories). It gives your games a single console-style home screen that you can browse from the couch with a DualSense controller.
+A native macOS app for launching games compiled with nxnative. It gives your games a single console-style home screen that you can browse from the couch with a DualSense controller.
 
 The launcher only starts games. Each one runs as an independent macOS app, and the launcher comes back to the front when a game it opened quits.
 
