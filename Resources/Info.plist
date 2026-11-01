@@ -6,6 +6,8 @@
     <string>Games Launcher</string>
     <key>CFBundleExecutable</key>
     <string>GamesLauncher</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
     <key>CFBundleIdentifier</key>
     <string>com.juansecalvinio.gameslauncher</string>
     <key>CFBundlePackageType</key>
