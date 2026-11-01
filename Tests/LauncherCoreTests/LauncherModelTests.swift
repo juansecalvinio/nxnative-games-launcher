@@ -36,8 +36,14 @@ private func threeGames() throws -> URL {
     try writeConfig([("A", "true"), ("B", "true"), ("C", "true")])
 }
 
+@MainActor private func loadedModel(configURL: URL, launcher: any GameLaunching) -> LauncherModel {
+    let model = LauncherModel(configURL: configURL, launcher: launcher)
+    model.reload()
+    return model
+}
+
 @MainActor @Test func moveStopsAtEdges() throws {
-    let model = LauncherModel(configURL: try threeGames(), launcher: FakeLauncher())
+    let model = loadedModel(configURL: try threeGames(), launcher: FakeLauncher())
     model.moveLeft()
     #expect(model.selectedIndex == 0)
     model.moveRight()
@@ -47,7 +53,7 @@ private func threeGames() throws -> URL {
 }
 
 @MainActor @Test func moveWithNoGamesDoesNotCrash() throws {
-    let model = LauncherModel(configURL: try writeConfig([]), launcher: FakeLauncher())
+    let model = loadedModel(configURL: try writeConfig([]), launcher: FakeLauncher())
     model.moveRight()
     model.moveLeft()
     #expect(model.selectedGame == nil)
@@ -56,7 +62,7 @@ private func threeGames() throws -> URL {
 
 @MainActor @Test func confirmLaunchesSelected() async throws {
     let launcher = FakeLauncher()
-    let model = LauncherModel(configURL: try threeGames(), launcher: launcher)
+    let model = loadedModel(configURL: try threeGames(), launcher: launcher)
     model.moveRight()
     await model.confirm()
     #expect(await launcher.launched == ["B"])
@@ -66,7 +72,7 @@ private func threeGames() throws -> URL {
     let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     try #"{"games":[{"name":"X","path":"/nonexistent/x"}]}"#.write(to: url, atomically: true, encoding: .utf8)
     let launcher = FakeLauncher()
-    let model = LauncherModel(configURL: url, launcher: launcher)
+    let model = loadedModel(configURL: url, launcher: launcher)
     await model.confirm()
     #expect(model.message == "No se encontró la carpeta: /nonexistent/x")
     #expect(await launcher.launched.isEmpty)
@@ -74,7 +80,7 @@ private func threeGames() throws -> URL {
 
 @MainActor @Test func launchFailureShowsMessage() async throws {
     let error = LaunchError.commandFailed(code: 1, output: "x")
-    let model = LauncherModel(configURL: try threeGames(), launcher: FakeLauncher(error: error))
+    let model = loadedModel(configURL: try threeGames(), launcher: FakeLauncher(error: error))
     await model.confirm()
     #expect(model.message == error.errorDescription)
     #expect(model.state == .ready)
@@ -82,7 +88,7 @@ private func threeGames() throws -> URL {
 
 @MainActor @Test func doubleConfirmLaunchesOnce() async throws {
     let launcher = FakeLauncher(delay: .milliseconds(100))
-    let model = LauncherModel(configURL: try threeGames(), launcher: launcher)
+    let model = loadedModel(configURL: try threeGames(), launcher: launcher)
     async let first: Void = model.confirm()
     async let second: Void = model.confirm()
     _ = await (first, second)
@@ -91,7 +97,7 @@ private func threeGames() throws -> URL {
 
 @MainActor @Test func confirmWhileMessageDismisses() async throws {
     let launcher = FakeLauncher()
-    let model = LauncherModel(configURL: try threeGames(), launcher: launcher)
+    let model = loadedModel(configURL: try threeGames(), launcher: launcher)
     model.message = "aviso"
     await model.confirm()
     #expect(model.message == nil)
@@ -100,7 +106,7 @@ private func threeGames() throws -> URL {
 
 @MainActor @Test func reloadClampsSelection() throws {
     let url = try threeGames()
-    let model = LauncherModel(configURL: url, launcher: FakeLauncher())
+    let model = loadedModel(configURL: url, launcher: FakeLauncher())
     model.moveRight()
     model.moveRight()
     _ = try writeConfig([("A", "true")], to: url)
@@ -110,7 +116,7 @@ private func threeGames() throws -> URL {
 }
 
 @MainActor @Test func reloadKeepsSelectionInRange() throws {
-    let model = LauncherModel(configURL: try threeGames(), launcher: FakeLauncher())
+    let model = loadedModel(configURL: try threeGames(), launcher: FakeLauncher())
     model.moveRight()
     model.reload()
     #expect(model.selectedIndex == 1)
@@ -118,14 +124,14 @@ private func threeGames() throws -> URL {
 
 @MainActor @Test func missingConfigState() {
     let url = URL(fileURLWithPath: "/nonexistent/\(UUID().uuidString).json")
-    let model = LauncherModel(configURL: url, launcher: FakeLauncher())
+    let model = loadedModel(configURL: url, launcher: FakeLauncher())
     #expect(model.state == .configMissing(url))
 }
 
 @MainActor @Test func invalidConfigState() throws {
     let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     try "{".write(to: url, atomically: true, encoding: .utf8)
-    let model = LauncherModel(configURL: url, launcher: FakeLauncher())
+    let model = loadedModel(configURL: url, launcher: FakeLauncher())
     guard case .configInvalid(let reported, let message) = model.state else {
         Issue.record("expected .configInvalid")
         return
@@ -148,14 +154,14 @@ private func writeAppConfig() throws -> (config: URL, app: URL) {
 
 @MainActor @Test func launchedGameTerminationIsReported() async throws {
     let (config, app) = try writeAppConfig()
-    let model = LauncherModel(configURL: config, launcher: FakeLauncher())
+    let model = loadedModel(configURL: config, launcher: FakeLauncher())
     await model.confirm()
     #expect(model.didLaunchedGameTerminate(at: app))
 }
 
 @MainActor @Test func terminationIsReportedOnce() async throws {
     let (config, app) = try writeAppConfig()
-    let model = LauncherModel(configURL: config, launcher: FakeLauncher())
+    let model = loadedModel(configURL: config, launcher: FakeLauncher())
     await model.confirm()
     _ = model.didLaunchedGameTerminate(at: app)
     #expect(!model.didLaunchedGameTerminate(at: app))
@@ -163,20 +169,20 @@ private func writeAppConfig() throws -> (config: URL, app: URL) {
 
 @MainActor @Test func unrelatedAppTerminationIsIgnored() async throws {
     let (config, _) = try writeAppConfig()
-    let model = LauncherModel(configURL: config, launcher: FakeLauncher())
+    let model = loadedModel(configURL: config, launcher: FakeLauncher())
     await model.confirm()
     #expect(!model.didLaunchedGameTerminate(at: URL(fileURLWithPath: "/Applications/Safari.app")))
 }
 
 @MainActor @Test func gameNeverLaunchedIsIgnored() throws {
     let (config, app) = try writeAppConfig()
-    let model = LauncherModel(configURL: config, launcher: FakeLauncher())
+    let model = loadedModel(configURL: config, launcher: FakeLauncher())
     #expect(!model.didLaunchedGameTerminate(at: app))
 }
 
 @MainActor @Test func failedLaunchIsNotTracked() async throws {
     let (config, app) = try writeAppConfig()
-    let model = LauncherModel(configURL: config, launcher: FakeLauncher(error: .nothingToLaunch))
+    let model = loadedModel(configURL: config, launcher: FakeLauncher(error: .nothingToLaunch))
     await model.confirm()
     #expect(!model.didLaunchedGameTerminate(at: app))
 }

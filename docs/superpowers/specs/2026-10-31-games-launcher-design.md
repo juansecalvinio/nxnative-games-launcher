@@ -9,7 +9,7 @@ Quiere un launcher nativo y simple que junte sus juegos en un solo lugar, se man
 ## Objetivos
 
 - Ver todos los juegos en una pantalla y lanzar cualquiera con el DualSense.
-- Definir los juegos en un archivo JSON editado a mano.
+- Definir los juegos en un archivo JSON, que el launcher completa solo con los juegos nuevos y se puede editar a mano.
 - Lanzar cada juego como el doble click por defecto, o con un comando custom si está definido.
 - Mostrar la carátula sin configuración, usando el ícono del `.app`.
 
@@ -37,7 +37,7 @@ Quiere un launcher nativo y simple que junte sus juegos en un solo lugar, se man
 - Pantalla principal, opción B de los mockups: fila horizontal de carátulas abajo, nombre grande del juego elegido sobre la fila, barra superior con avatar y hora, barra inferior con ayuda de botones (`✕ Jugar`) y el juego elegido llenando el fondo. No hay botón de opciones: Juan lo descartó.
 - Carátula: el ícono del `.app`, ampliado y desenfocado de fondo, con el ícono nítido encima. Los dos `.app` existentes traen `AppIcon.icns` de 1024×1024 (verificado), pero es cuadrado y la pantalla no, por eso se mantiene el fondo desenfocado.
 - La Mac es de uso general: Juan abre el launcher a mano cuando quiere jugar, sin arranque automático al iniciar sesión.
-- Validó estas suposiciones: navegación completa con DualSense (izquierda/derecha para moverse, ✕ para jugar), pantalla completa, JSON editado a mano, nombre del juego en el JSON.
+- Validó estas suposiciones: navegación completa con DualSense (izquierda/derecha para moverse, ✕ para jugar), pantalla completa, JSON editable a mano, nombre del juego en el JSON.
 - El launcher solo lanza el juego. El juego se abre como una app independiente y se cierra con su ventana del sistema operativo, no desde el launcher. El launcher no controla ni cierra los juegos, ni escucha el control mientras se juega. Sí detecta cuándo termina un juego que abrió, para volver al primer plano (pedido de Juan tras probarlo).
 
 ## Decisiones técnicas de Claude
@@ -69,7 +69,8 @@ Quiere un launcher nativo y simple que junte sus juegos en un solo lugar, se man
 - `name` y `path` son obligatorios; `command` es opcional. El comando corre con `path` como directorio de trabajo, por eso el `.app` va sin ruta.
 - `path` es el directorio que contiene el `.app`. También se acepta que apunte directamente al `.app`. El launcher busca el `.app` como hijo directo del directorio. En las carpetas reales conviven con él archivos `.app.key`, `.xci`, `.nsp`, `.7z` y una carpeta `*_build`, que se ignoran. Si hubiera más de un `.app`, se usa el primero en orden alfabético.
 - Estado real al 2026-10-31: en `~/Documents/gaming/roms/switch/` hay 4 carpetas y 3 tienen `.app` (`ZELDA_BOTW`, `DQ_REIMAGINED`, `ZELDA_LINKS_AWAKENING`). `DK_RETURNS_HD` todavía tiene una descarga en curso.
-- El launcher no escanea esta carpeta: solo muestra lo que está en el JSON.
+- Al abrirse y al volver al frente, el launcher escanea `~/Documents/gaming/roms/switch`: cada subcarpeta con un `.app` que no esté en el JSON se agrega al final del archivo, con el nombre del `.app` y un `command` con `DM_LANG=es-419` y `DM_FULLSCREEN=1`. Si el JSON falta o es inválido, no lo toca. Un juego sacado del JSON cuya carpeta sigue ahí vuelve a aparecer. Pedido de Juan: que un juego recién compilado aparezca solo.
+- Al abrirse muestra "Cargando biblioteca de juegos..." durante el escaneo, con un mínimo de 1 segundo; al volver al frente escanea sin loader (decisiones de Claude).
 - El orden en la fila es el orden del JSON.
 - Se expande `~` en los paths.
 
