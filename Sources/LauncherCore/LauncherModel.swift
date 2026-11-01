@@ -48,11 +48,11 @@ public final class LauncherModel {
         let result = ConfigStore.load(from: configURL)
         guard case .loaded(let entries) = result, let libraryURL else { return result }
 
-        let discovered = GameDiscovery.newEntries(in: libraryURL, existing: entries)
-        guard !discovered.isEmpty else { return result }
+        let kept = GameDiscovery.removingDeleted(from: entries, in: libraryURL)
+        let all = kept + GameDiscovery.newEntries(in: libraryURL, existing: kept)
+        guard all != entries else { return result }
 
-        let all = entries + discovered
-        // If this fails the games still show, and the next scan tries to save them again.
+        // If this fails the list still updates, and the next scan tries to save it again.
         try? ConfigStore.save(all, to: configURL)
         return .loaded(all)
     }
