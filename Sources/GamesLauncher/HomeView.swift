@@ -39,7 +39,7 @@ struct HomeView: View {
             isFocused = true
             controllerInput = ControllerInput(model: model)
             controllerInput?.start()
-            enterFullScreen()
+            coverScreen()
         }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             model.reload()
@@ -52,9 +52,16 @@ struct HomeView: View {
         }
     }
 
-    private func enterFullScreen() {
-        guard let window = NSApp.windows.first, !window.styleMask.contains(.fullScreen) else { return }
-        window.toggleFullScreen(nil)
+    // Native full screen would put the launcher in its own Space, and a game opened
+    // from there can't enter full screen itself, so the window just covers the display.
+    private func coverScreen() {
+        guard let window = NSApp.windows.first, let screen = window.screen ?? NSScreen.main else { return }
+        NSApp.presentationOptions = [.hideDock, .hideMenuBar]
+        for button in [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton] {
+            window.standardWindowButton(button)?.isHidden = true
+        }
+        window.isMovable = false
+        window.setFrame(screen.frame, display: true)
     }
 
     @ViewBuilder

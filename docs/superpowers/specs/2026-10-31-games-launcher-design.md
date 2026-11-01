@@ -96,3 +96,9 @@ Tras lanzar un juego el launcher queda abierto detrás y pasa al frente cuando e
 
 - Animaciones, sonidos y detalles visuales finos, siempre cerca de la referencia de Switch.
 - Cómo se ve y cómo se organiza internamente el código.
+
+## Pantalla completa
+
+El launcher usa una ventana que cubre la pantalla, con Dock y barra de menús ocultos, y no la pantalla completa nativa de macOS. Medido: desde un espacio de pantalla completa nativa, los juegos con `DM_FULLSCREEN=1` quedaban en 1280×752; desde esta ventana ocupan toda la pantalla (1440×900).
+
+`DM_FULLSCREEN` y `DM_LANG` son variables de nxnative y van en el `command` de cada juego.
