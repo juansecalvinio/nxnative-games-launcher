@@ -27,6 +27,10 @@ public enum GameResolver {
             Game(name: entry.name, directory: directory, appURL: appURL, command: entry.command, unavailableReason: reason)
         }
 
+        if isPermissionDenied(url, fileManager) {
+            let reason = "Sin permiso para leer: \(path). Activalo en Ajustes del Sistema > Privacidad y seguridad > Archivos y carpetas."
+            return game(directory: url, appURL: nil, reason: reason)
+        }
         guard isDirectory(url, fileManager) else {
             return game(directory: url, appURL: nil, reason: "No se encontró la carpeta: \(path)")
         }
@@ -37,6 +41,17 @@ public enum GameResolver {
         let appURL = firstApp(in: url, fileManager)
         let reason = appURL == nil && entry.command == nil ? "No se encontró ningún .app en: \(path)" : nil
         return game(directory: url, appURL: appURL, reason: reason)
+    }
+
+    private static func isPermissionDenied(_ url: URL, _ fileManager: FileManager) -> Bool {
+        do {
+            _ = try fileManager.contentsOfDirectory(at: url, includingPropertiesForKeys: nil)
+            return false
+        } catch let error as CocoaError {
+            return error.code == .fileReadNoPermission
+        } catch {
+            return false
+        }
     }
 
     private static func firstApp(in directory: URL, _ fileManager: FileManager) -> URL? {

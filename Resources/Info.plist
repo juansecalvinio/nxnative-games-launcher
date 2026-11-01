@@ -16,6 +16,8 @@
     <string>1</string>
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
+    <key>NSDocumentsFolderUsageDescription</key>
+    <string>Games Launcher necesita leer tu carpeta de juegos para mostrarlos y abrirlos.</string>
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
 </dict>

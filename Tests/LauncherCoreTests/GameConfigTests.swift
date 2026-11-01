@@ -58,3 +58,16 @@ private func writeConfig(_ json: String) throws -> URL {
 @Test func defaultURLPoints() {
     #expect(ConfigStore.defaultURL.path.hasSuffix("GamesLauncher/games.json"))
 }
+
+@Test func malformedJsonSaysWhere() throws {
+    let url = try writeConfig("""
+    {"games":[
+      {"name":"a" "path":"/a"}
+    ]}
+    """)
+    guard case .invalid(let message) = ConfigStore.load(from: url) else {
+        Issue.record("expected .invalid")
+        return
+    }
+    #expect(message.contains("line 2"))
+}

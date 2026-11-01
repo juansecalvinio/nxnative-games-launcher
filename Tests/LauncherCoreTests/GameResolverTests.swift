@@ -114,3 +114,21 @@ private func addFile(_ name: String, in directory: URL) throws {
     let game = GameResolver.resolve(GameEntry(name: "J", path: path, command: "./run"))
     #expect(!game.isLaunchable)
 }
+
+@Test func unreadableDirectoryReportsPermission() throws {
+    let dir = try makeDirectory()
+    try FileManager.default.setAttributes([.posixPermissions: 0o000], ofItemAtPath: dir.path)
+    defer { try? FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: dir.path) }
+    let game = GameResolver.resolve(GameEntry(name: "J", path: dir.path))
+    #expect(game.unavailableReason?.hasPrefix("Sin permiso para leer: \(dir.path)") == true)
+}
+
+@Test func unreadableParentReportsPermission() throws {
+    let dir = try makeDirectory()
+    try addFolder("Juego", in: dir)
+    try FileManager.default.setAttributes([.posixPermissions: 0o000], ofItemAtPath: dir.path)
+    defer { try? FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: dir.path) }
+    let path = dir.appendingPathComponent("Juego").path
+    let game = GameResolver.resolve(GameEntry(name: "J", path: path, command: "./run"))
+    #expect(game.unavailableReason?.hasPrefix("Sin permiso para leer: \(path)") == true)
+}

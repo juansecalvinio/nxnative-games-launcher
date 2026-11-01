@@ -47,7 +47,8 @@ public enum ConfigStore {
         case .typeMismatch(_, let context), .valueNotFound(_, let context):
             return "Valor incorrecto en \(location(context))"
         case .dataCorrupted(let context):
-            return "JSON mal formado: \(context.underlyingError?.localizedDescription ?? context.debugDescription)"
+            let detail = (context.underlyingError as NSError?)?.userInfo[NSDebugDescriptionErrorKey] as? String
+            return "JSON mal formado: \(detail ?? context.debugDescription)"
         @unknown default:
             return decoding.localizedDescription
         }
