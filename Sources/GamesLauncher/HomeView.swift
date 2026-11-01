@@ -4,6 +4,9 @@ import SwiftUI
 struct HomeView: View {
     let model: LauncherModel
 
+    @State private var controllerInput: ControllerInput?
+    @FocusState private var isFocused: Bool
+
     var body: some View {
         ZStack {
             GameBackground(game: model.selectedGame)
@@ -17,6 +20,35 @@ struct HomeView: View {
             }
         }
         .foregroundStyle(.white)
+        .focusable()
+        .focusEffectDisabled()
+        .focused($isFocused)
+        .onKeyPress(.leftArrow) {
+            model.moveLeft()
+            return .handled
+        }
+        .onKeyPress(.rightArrow) {
+            model.moveRight()
+            return .handled
+        }
+        .onKeyPress(.return) {
+            Task { await model.confirm() }
+            return .handled
+        }
+        .onAppear {
+            isFocused = true
+            controllerInput = ControllerInput(model: model)
+            controllerInput?.start()
+            enterFullScreen()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            model.reload()
+        }
+    }
+
+    private func enterFullScreen() {
+        guard let window = NSApp.windows.first, !window.styleMask.contains(.fullScreen) else { return }
+        window.toggleFullScreen(nil)
     }
 
     @ViewBuilder
