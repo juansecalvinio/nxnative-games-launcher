@@ -69,7 +69,7 @@ Quiere un launcher nativo y simple que junte sus juegos en un solo lugar, se man
 - `name` y `path` son obligatorios; `command` es opcional. El comando corre con `path` como directorio de trabajo, por eso el `.app` va sin ruta.
 - `path` es el directorio que contiene el `.app`. También se acepta que apunte directamente al `.app`. El launcher busca el `.app` como hijo directo del directorio. En las carpetas reales conviven con él archivos `.app.key`, `.xci`, `.nsp`, `.7z` y una carpeta `*_build`, que se ignoran. Si hubiera más de un `.app`, se usa el primero en orden alfabético.
 - Estado real al 2026-10-31: en `~/Documents/gaming/roms/switch/` hay 4 carpetas y 3 tienen `.app` (`ZELDA_BOTW`, `DQ_REIMAGINED`, `ZELDA_LINKS_AWAKENING`). `DK_RETURNS_HD` todavía tiene una descarga en curso.
-- Al abrirse y al volver al frente, el launcher escanea `~/Documents/gaming/roms/switch`: cada subcarpeta con un `.app` que no esté en el JSON se agrega al final del archivo, con el nombre del `.app` y un `command` con `DM_LANG=es-419` y `DM_FULLSCREEN=1`. Si el JSON falta o es inválido, no lo toca. Un juego sacado del JSON cuya carpeta sigue ahí vuelve a aparecer. Pedido de Juan: que un juego recién compilado aparezca solo.
+- Al abrirse y al volver al frente, el launcher escanea `~/Documents/gaming/roms/switch`: cada subcarpeta con un `.app` que no esté en el JSON se agrega al final del archivo, con el nombre del `.app` y un `command` con `DM_LANG=es-419` y `DM_FULLSCREEN=1`. Un juego dentro de esa carpeta cuyo `.app` ya no existe se quita de la fila y del JSON, aunque tenga `command`; si la carpeta no se puede leer, no se quita nada, y los juegos fuera de ella nunca se quitan. Si el JSON falta o es inválido, no lo toca. Un juego sacado del JSON cuya carpeta sigue ahí vuelve a aparecer. Pedido de Juan: que un juego recién compilado aparezca solo.
 - Al abrirse muestra "Cargando biblioteca de juegos..." durante el escaneo, con un mínimo de 1 segundo; al volver al frente escanea sin loader (decisiones de Claude).
 - El orden en la fila es el orden del JSON.
 - Se expande `~` en los paths.
@@ -83,8 +83,8 @@ Decisión de Claude: `~/Library/Application Support/GamesLauncher/games.json`. S
 Decisión de Claude:
 
 - JSON inválido: pantalla de error con la ruta y el problema; la app no se cierra.
-- Juego sin `.app` encontrado o path inexistente, y sin `command`: aparece en la fila marcado como no disponible, y al elegirlo muestra el motivo.
-- Juego con `command` pero sin `.app`: se puede lanzar, y usa una carátula genérica.
+- Juego fuera de la carpeta de juegos, sin `.app` encontrado o con path inexistente, y sin `command`: aparece en la fila marcado como no disponible, y al elegirlo muestra el motivo.
+- Juego fuera de la carpeta de juegos con `command` pero sin `.app`: se puede lanzar, y usa una carátula genérica.
 - Falla al lanzar: mensaje en pantalla y se sigue en el launcher. Con `open` el comando termina enseguida, así que solo se detectan fallas de arranque, no lo que pase después con el juego.
 
 ## Salir del launcher
