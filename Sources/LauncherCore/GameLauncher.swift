@@ -30,7 +30,9 @@ public struct SystemGameLauncher: GameLaunching {
         if let command = game.command {
             try await run(GameLanguage.adjusted(command, app: game.appURL), in: game.directory)
         } else if let appURL = game.appURL {
-            _ = try await NSWorkspace.shared.openApplication(at: appURL, configuration: .init())
+            let configuration = NSWorkspace.OpenConfiguration()
+            configuration.environment = ["DM_LAUNCHER": "0"]  // skips nxnative's settings window
+            _ = try await NSWorkspace.shared.openApplication(at: appURL, configuration: configuration)
         } else {
             throw LaunchError.nothingToLaunch
         }

@@ -36,7 +36,7 @@ private func makeConfig(_ json: String) throws -> URL {
     #expect(entries.count == 1)
     #expect(entry.name == "Donkey Kong")
     #expect(entry.path.hasSuffix(library.lastPathComponent + "/DK"))
-    #expect(entry.command == "open --env DM_LANG=es-419 --env DM_FULLSCREEN=1 \"Donkey Kong.app\"")
+    #expect(entry.command == "open --env DM_LANG=es-419 --env DM_FULLSCREEN=1 --env DM_LAUNCHER=0 \"Donkey Kong.app\"")
 }
 
 @Test func ignoresFolderWithoutApp() throws {
@@ -74,7 +74,7 @@ private func makeConfig(_ json: String) throws -> URL {
 
 @Test func commandEscapesShellCharactersInAppName() {
     #expect(GameDiscovery.command(forApp: "Say \"Hi\" $5.app")
-        == "open --env DM_LANG=es-419 --env DM_FULLSCREEN=1 \"Say \\\"Hi\\\" \\$5.app\"")
+        == "open --env DM_LANG=es-419 --env DM_FULLSCREEN=1 --env DM_LAUNCHER=0 \"Say \\\"Hi\\\" \\$5.app\"")
 }
 
 // MARK: ConfigStore.save
