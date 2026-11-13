@@ -60,7 +60,7 @@ struct ConfigInvalidView: View {
 struct LoadingView: View {
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            Color.background.ignoresSafeArea()
             VStack(spacing: 24) {
                 ProgressView()
                     .controlSize(.large)

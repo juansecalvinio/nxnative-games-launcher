@@ -34,8 +34,9 @@ Quiere un launcher nativo y simple que junte sus juegos en un solo lugar, se man
 - Configuración por JSON con el path del directorio donde está el juego.
 - Comando de ejecución custom opcional por juego; sin él, se ejecuta como por defecto en el sistema (equivalente al doble click en el `.app`).
 - Control principal: DualSense por Bluetooth.
-- Pantalla principal, opción B de los mockups: fila horizontal de carátulas abajo, nombre grande del juego elegido sobre la fila, barra superior con avatar y hora, barra inferior con ayuda de botones (`✕ Jugar`) y el juego elegido llenando el fondo. No hay botón de opciones: Juan lo descartó.
-- Carátula: el ícono del `.app`, ampliado y desenfocado de fondo, con el ícono nítido encima. Los dos `.app` existentes traen `AppIcon.icns` de 1024×1024 (verificado), pero es cuadrado y la pantalla no, por eso se mantiene el fondo desenfocado.
+- Pantalla principal (rediseño del 2026-11-13, reemplaza la opción B de los mockups): como la Home original de Switch en tema oscuro. Fondo gris oscuro liso, carátulas cuadradas grandes en fila desde la izquierda, nombre del juego elegido en celeste sobre su carátula y borde celeste de selección. Arriba: avatar a la izquierda; hora, Wi-Fi y batería a la derecha. Abajo, tras una línea: indicador de mando a la izquierda (gris y tachado si no hay ninguno conectado) y `✕ Jugar` a la derecha. Sin la fila de botones redondos ni botón de opciones.
+- Decisiones de Claude en ese rediseño: Wi-Fi solo conectado o no, sin intensidad; batería real de la Mac con rayo al cargar, oculta en una Mac sin batería; íconos del sistema (SF Symbols) salvo la batería, dibujada como la de Switch; carátula = ícono del `.app` ampliado y recortado en cuadrado para tapar sus esquinas redondeadas; sin tema claro.
+- Carátula: el ícono del `.app` (los `.app` traen `AppIcon.icns` de 1024×1024, verificado).
 - La Mac es de uso general: Juan abre el launcher a mano cuando quiere jugar, sin arranque automático al iniciar sesión.
 - Validó estas suposiciones: navegación completa con DualSense (izquierda/derecha para moverse, ✕ para jugar), pantalla completa, JSON editable a mano, nombre del juego en el JSON.
 - El launcher solo lanza el juego. El juego se abre como una app independiente y se cierra con su ventana del sistema operativo, no desde el launcher. El launcher no controla ni cierra los juegos, ni escucha el control mientras se juega. Sí detecta cuándo termina un juego que abrió, para volver al primer plano (pedido de Juan tras probarlo).
@@ -100,6 +101,6 @@ Tras lanzar un juego el launcher queda abierto detrás y pasa al frente cuando e
 
 ## Pantalla completa
 
-El launcher usa una ventana que cubre la pantalla, con Dock y barra de menús ocultos, y no la pantalla completa nativa de macOS. Medido: desde un espacio de pantalla completa nativa, los juegos con `DM_FULLSCREEN=1` quedaban en 1280×752; desde esta ventana ocupan toda la pantalla (1440×900).
+El launcher tiene los botones de ventana de macOS (cerrar, minimizar y el verde) y abre en pantalla completa; con el botón verde pasa a una ventana normal que ocupa el área visible de la pantalla, y vuelve (pedido de Juan). Cerrar la ventana cierra la app. Esa pantalla completa no usa la pantalla completa nativa de macOS: cubre la pantalla con Dock y barra de menús ocultos (decisión de Claude, por la medición de abajo). Medido: desde un espacio de pantalla completa nativa, los juegos con `DM_FULLSCREEN=1` quedaban en 1280×752; desde una ventana normal ocupan toda la pantalla (1440×900).
 
 `DM_FULLSCREEN` y `DM_LANG` son variables de nxnative y van en el `command` de cada juego.

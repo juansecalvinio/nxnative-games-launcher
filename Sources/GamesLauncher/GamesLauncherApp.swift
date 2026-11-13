@@ -3,6 +3,7 @@ import SwiftUI
 
 @main
 struct GamesLauncherApp: App {
+    @NSApplicationDelegateAdaptor private var appDelegate: AppDelegate
     @State private var model = LauncherModel(
         configURL: ConfigStore.defaultURL,
         libraryURL: ConfigStore.defaultLibraryURL,
@@ -15,5 +16,11 @@ struct GamesLauncherApp: App {
                 .frame(minWidth: 960, minHeight: 600)
         }
         .windowStyle(.hiddenTitleBar)
+    }
+}
+
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        true
     }
 }

@@ -5,15 +5,19 @@ struct HomeView: View {
     let model: LauncherModel
 
     @State private var controllerInput: ControllerInput?
+    @State private var status = SystemStatus()
     @FocusState private var isFocused: Bool
 
     var body: some View {
         ZStack {
-            GameBackground(game: model.selectedGame)
+            Color.background.ignoresSafeArea()
             VStack(spacing: 0) {
-                TopBar()
+                TopBar(status: status)
                 content
-                FooterBar(showsPlay: model.selectedGame?.isLaunchable == true)
+                FooterBar(
+                    showsPlay: model.selectedGame?.isLaunchable == true,
+                    isControllerConnected: status.isControllerConnected
+                )
             }
             if let message = model.message {
                 MessagePanel(message: message)
@@ -42,7 +46,8 @@ struct HomeView: View {
             isFocused = true
             controllerInput = ControllerInput(model: model)
             controllerInput?.start()
-            coverScreen()
+            status.start()
+            setUpWindow()
         }
         .task {
             await model.start()
@@ -60,16 +65,12 @@ struct HomeView: View {
         }
     }
 
-    // Native full screen would put the launcher in its own Space, and a game opened
-    // from there can't enter full screen itself, so the window just covers the display.
-    private func coverScreen() {
+    // Opens in full screen; the green button switches to a window filling the visible screen.
+    private func setUpWindow() {
         guard let window = NSApp.windows.first, let screen = window.screen ?? NSScreen.main else { return }
-        NSApp.presentationOptions = [.hideDock, .hideMenuBar]
-        for button in [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton] {
-            window.standardWindowButton(button)?.isHidden = true
-        }
-        window.isMovable = false
-        window.setFrame(screen.frame, display: true)
+        window.setFrame(screen.visibleFrame, display: true)
+        WindowFullScreen.shared.attach(to: window)
+        WindowFullScreen.shared.enter(animated: false)
     }
 
     @ViewBuilder
@@ -82,63 +83,70 @@ struct HomeView: View {
         case .ready where model.games.isEmpty:
             NoticeText(title: "No hay juegos en games.json")
         case .ready:
-            VStack(alignment: .leading, spacing: 28) {
-                Spacer()
-                Text(model.selectedGame?.name ?? "")
-                    .font(.system(size: 52, weight: .bold))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.5)
-                    .shadow(radius: 12)
-                GameRow(games: model.games, selectedIndex: model.selectedIndex)
-            }
-            .padding(.horizontal, 64)
-            .padding(.bottom, 36)
+            GameRow(games: model.games, selectedIndex: model.selectedIndex)
         }
     }
 }
 
+private let sideMargin: CGFloat = 64
+
 private struct TopBar: View {
+    let status: SystemStatus
+
     var body: some View {
-        HStack {
+        HStack(spacing: 22) {
             Circle()
                 .fill(.white.opacity(0.9))
-                .frame(width: 44, height: 44)
+                .frame(width: 56, height: 56)
                 .overlay {
                     Image(systemName: "person.fill")
+                        .font(.title2)
                         .foregroundStyle(.black.opacity(0.65))
                 }
             Spacer()
             TimelineView(.everyMinute) { context in
                 Text(context.date, format: .dateTime.hour().minute())
-                    .font(.title2.weight(.medium))
+                    .font(.system(size: 30, weight: .medium))
                     .monospacedDigit()
             }
+            WiFiIcon(isConnected: status.isWiFiConnected)
+            if let battery = status.battery {
+                BatteryIcon(level: battery)
+            }
         }
-        .padding(.horizontal, 64)
-        .padding(.top, 36)
+        .padding(.horizontal, sideMargin)
+        .padding(.top, 40)
     }
 }
 
+/// The Switch home row: big square covers from the left, the selected one outlined
+/// with its name above it, and the row scrolling only when the selection leaves the screen.
 private struct GameRow: View {
     let games: [Game]
     let selectedIndex: Int
 
     var body: some View {
-        ScrollViewReader { proxy in
-            ScrollView(.horizontal) {
-                HStack(spacing: 20) {
-                    ForEach(games.indices, id: \.self) { index in
-                        GameTile(game: games[index], isSelected: index == selectedIndex)
-                            .id(index)
+        GeometryReader { geometry in
+            let tile = min(geometry.size.width * 0.2, geometry.size.height * 0.62)
+            ScrollViewReader { proxy in
+                ScrollView(.horizontal) {
+                    HStack(spacing: tile * 0.05) {
+                        ForEach(games.indices, id: \.self) { index in
+                            GameTile(game: games[index], size: tile, isSelected: index == selectedIndex)
+                                .id(index)
+                        }
                     }
+                    .padding(.top, 64)
+                    .padding(.bottom, 16)
                 }
-                .padding(12)
-            }
-            .scrollIndicators(.never)
-            .scrollDisabled(true)
-            .onChange(of: selectedIndex) { _, index in
-                withAnimation(.easeOut(duration: 0.15)) {
-                    proxy.scrollTo(index, anchor: .center)
+                .contentMargins(.horizontal, sideMargin + 8, for: .scrollContent)
+                .scrollIndicators(.never)
+                .scrollDisabled(true)
+                .frame(maxHeight: .infinity)
+                .onChange(of: selectedIndex) { _, index in
+                    withAnimation(.easeOut(duration: 0.15)) {
+                        proxy.scrollTo(index)
+                    }
                 }
             }
         }
@@ -147,41 +155,58 @@ private struct GameRow: View {
 
 private struct GameTile: View {
     let game: Game
+    let size: CGFloat
     let isSelected: Bool
 
     var body: some View {
         GameIcon(game: game)
-            .frame(width: 168, height: 168)
-            .clipShape(RoundedRectangle(cornerRadius: 4))
+            .frame(width: size, height: size)
+            .clipped()
             .opacity(game.isLaunchable ? 1 : 0.4)
             .overlay {
-                RoundedRectangle(cornerRadius: 7)
-                    .inset(by: -6)
-                    .stroke(Color.selection, lineWidth: isSelected ? 4 : 0)
+                Rectangle()
+                    .inset(by: -7)
+                    .stroke(Color.selection, lineWidth: isSelected ? 5 : 0)
             }
-            .scaleEffect(isSelected ? 1.04 : 1)
+            .overlay(alignment: .topLeading) {
+                if isSelected {
+                    Text(game.name)
+                        .font(.system(size: 34, weight: .regular))
+                        .foregroundStyle(Color.selection)
+                        .lineLimit(1)
+                        .fixedSize()
+                        .offset(y: -58)
+                }
+            }
             .animation(.easeOut(duration: 0.12), value: isSelected)
     }
 }
 
 private struct FooterBar: View {
     let showsPlay: Bool
+    let isControllerConnected: Bool
 
     var body: some View {
         VStack(spacing: 0) {
-            Rectangle().fill(.white.opacity(0.35)).frame(height: 1)
-            HStack {
+            Rectangle().fill(.white.opacity(0.45)).frame(height: 1)
+            HStack(spacing: 12) {
+                ControllerIcon(isConnected: isControllerConnected)
                 Spacer()
-                Text("✕ Jugar").opacity(showsPlay ? 1 : 0)
+                Group {
+                    Image(systemName: "xmark.circle.fill").font(.system(size: 28))
+                    Text("Jugar").font(.system(size: 26))
+                }
+                .opacity(showsPlay ? 1 : 0)
             }
-            .font(.title3.weight(.medium))
-            .padding(.vertical, 18)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 22)
         }
-        .padding(.horizontal, 64)
-        .padding(.bottom, 8)
+        .padding(.horizontal, sideMargin - 16)
+        .padding(.bottom, 4)
     }
 }
 
 extension Color {
-    static let selection = Color(red: 0.18, green: 0.84, blue: 0.88)
+    static let selection = Color(red: 0.24, green: 0.62, blue: 1.0)
+    static let background = Color(white: 0.18)
 }
