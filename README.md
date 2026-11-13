@@ -59,7 +59,7 @@ Create it with one entry per game. Games appear in the same order as the file:
     {
       "name": "Another Game",
       "path": "~/Games/AnotherGame",
-      "command": "open --env DM_LANG=es-419 --env DM_FULLSCREEN=1 \"Another Game.app\""
+      "command": "open --env DM_LANG=es-419 --env DM_FULLSCREEN=1 --env DM_LAUNCHER=0 \"Another Game.app\""
     }
   ]
 }
@@ -81,6 +81,7 @@ nxnative games read these environment variables, which you can set from `command
 | --- | --- |
 | `DM_LANG` | Game language, such as `es-419`. |
 | `DM_FULLSCREEN` | Starts the game in full screen when set to any value. |
+| `DM_LAUNCHER` | `0` skips nxnative's settings window that some games show at startup. Games found automatically get it. |
 
 These only apply when the game starts. If it is already running, the launcher just brings it to the front.
 

@@ -51,7 +51,8 @@ public enum GameDiscovery {
         for character in ["\\", "\"", "$", "`"] {
             escaped = escaped.replacingOccurrences(of: character, with: "\\" + character)
         }
-        return "open --env DM_LANG=es-419 --env DM_FULLSCREEN=1 \"\(escaped)\""
+        // DM_LAUNCHER=0 skips nxnative's settings window; a double click on the .app still shows it.
+        return "open --env DM_LANG=es-419 --env DM_FULLSCREEN=1 --env DM_LAUNCHER=0 \"\(escaped)\""
     }
 
     static func displayPath(_ path: String) -> String {
