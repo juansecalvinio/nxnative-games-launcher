@@ -28,7 +28,7 @@ public struct SystemGameLauncher: GameLaunching {
 
     public func launch(_ game: Game) async throws {
         if let command = game.command {
-            try await run(command, in: game.directory)
+            try await run(GameLanguage.adjusted(command, app: game.appURL), in: game.directory)
         } else if let appURL = game.appURL {
             _ = try await NSWorkspace.shared.openApplication(at: appURL, configuration: .init())
         } else {
